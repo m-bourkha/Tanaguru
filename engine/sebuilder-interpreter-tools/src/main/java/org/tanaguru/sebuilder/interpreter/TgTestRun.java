@@ -38,6 +38,7 @@ import org.apache.log4j.Logger;
 import org.openqa.selenium.*;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.remote.RemoteWebDriver;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.tanaguru.sebuilder.interpreter.exception.TestRunException;
 import org.tanaguru.sebuilder.tools.FirefoxDriverObjectPool;
@@ -49,6 +50,9 @@ import org.tanaguru.sebuilder.tools.FirefoxDriverObjectPool;
  */
 public class TgTestRun extends TestRun {
 final static Logger LOGGER = Logger.getLogger(TgTestRun.class);
+
+    
+    private int waitTimeNgApp;
     private boolean isStepOpenNewPage = false;
     private Map<String, String> jsScriptMap;
     public Map<String, String> getJsScriptMap() {
@@ -156,6 +160,29 @@ final static Logger LOGGER = Logger.getLogger(TgTestRun.class);
               implicitelyWaitDriverTimeout, 
               pageLoadDriverTimeout);
     }
+    /**
+     * Constructor
+     * @param script
+     * @param webDriverFactory
+     * @param webDriverConfig
+     * @param implicitelyWaitDriverTimeout
+     * @param pageLoadDriverTimeout 
+     * @param waitTimeNgApp
+     */
+    public TgTestRun(
+                Script script, 
+                WebDriverFactory webDriverFactory, 
+                HashMap<String, String> webDriverConfig, 
+                int implicitelyWaitDriverTimeout, 
+                int pageLoadDriverTimeout,
+                int waitTimeNgApp) {
+        super(script, 
+              webDriverFactory, 
+              webDriverConfig, 
+              implicitelyWaitDriverTimeout, 
+              pageLoadDriverTimeout);
+        this.waitTimeNgApp= waitTimeNgApp;
+    }
     
     /**
      * @return True if there is another step to execute.
@@ -262,7 +289,11 @@ final static Logger LOGGER = Logger.getLogger(TgTestRun.class);
     private void getSourceCodeAndFireNewPage(String url) {
         try {
             try {
-                Thread.sleep(500);
+                if (this.waitTimeNgApp <= 500) {
+                    Thread.sleep(500);
+                } else {
+                    Thread.sleep(waitTimeNgApp);
+                }
             } catch (InterruptedException ex) {
                 throw new TestRunException(currentStep() + " failed.", ex, currentStep().toString(), stepIndex);
             }
@@ -304,7 +335,7 @@ final static Logger LOGGER = Logger.getLogger(TgTestRun.class);
 //    @Cacheable("jsScriptResult")
     private Map<String, String> executeJsScripts() {
         i++;
-       LOGGER.debug("=================>Appel exec JS: "+i);
+      // LOGGER.debug("=================>Appel exec JS: "+i);
         getLog().debug("Executing js");
         Map<String, String> jsScriptResult = new HashMap<>();
         for (Map.Entry<String, String> entry : jsScriptMap.entrySet()) {
